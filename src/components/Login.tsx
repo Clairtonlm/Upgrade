@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
 
 interface User {
   name: string;
@@ -16,6 +16,8 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +27,15 @@ const Login: React.FC = () => {
       setEmail(savedEmail);
       setRememberMe(true);
     }
-  }, []);
+
+    // Remover mensagem de sucesso após 3 segundos
+    if (loginSuccess) {
+      const timer = setTimeout(() => {
+        setLoginSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess]);
 
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +67,13 @@ const Login: React.FC = () => {
         );
         localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
         
-        navigate('/dashboard');
+        // Mostrar mensagem de sucesso
+        setLoginSuccess(true);
+        
+        // Navegar para dashboard após um curto delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       } else {
         alert('Credenciais inválidas');
       }
@@ -91,12 +107,25 @@ const Login: React.FC = () => {
         localStorage.setItem('rememberedEmail', email);
       }
       
-      navigate('/dashboard');
+      // Mostrar mensagem de sucesso
+      setLoginSuccess(true);
+      
+      // Navegar para dashboard após um curto delay
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 relative">
+      {loginSuccess && (
+        <div className="fixed top-0 left-0 w-full bg-green-500 text-white text-center py-3 z-50 flex items-center justify-center">
+          <FaCheckCircle className="mr-2" />
+          {isLogin ? 'Login efetuado com sucesso!' : 'Registro realizado com sucesso!'}
+        </div>
+      )}
+      
       <div className="bg-white p-8 rounded-xl shadow-2xl w-96">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           {isLogin ? 'Entrar' : 'Registrar'}
@@ -132,26 +161,47 @@ const Login: React.FC = () => {
           <div className="relative">
             <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Senha"
-              className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
           
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={() => setRememberMe(!rememberMe)}
-              className="mr-2"
-            />
-            <label htmlFor="rememberMe" className="text-sm">
-              Lembrar meu email
-            </label>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+                className="mr-2"
+              />
+              <label htmlFor="rememberMe" className="text-sm">
+                Lembrar meu email
+              </label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="showPassword"
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
+                className="mr-2"
+              />
+              <label htmlFor="showPassword" className="text-sm">
+                Mostrar senha
+              </label>
+            </div>
           </div>
           
           <button
