@@ -1,8 +1,16 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 export default function Header() {
-  const username = localStorage.getItem('username') || 'Usuário';
+  const navigate = useNavigate();
+  const username = localStorage.getItem('userName') || 'Usuário';
+
+  const handleLogout = () => {
+    localStorage.removeItem('userName');
+    localStorage.removeItem('users');
+    navigate('/login');
+  };
 
   return (
     <header className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg p-6">
@@ -19,6 +27,13 @@ export default function Header() {
           <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
             Upgrade Manager
           </span>
+          <button 
+            onClick={handleLogout}
+            className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors duration-300"
+            title="Sair"
+          >
+            <FaSignOutAlt className="text-white text-xl" />
+          </button>
         </div>
       </div>
     </header>

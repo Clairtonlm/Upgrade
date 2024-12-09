@@ -1,27 +1,34 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './pages/Dashboard';
 
-const AppRoutes: React.FC = () => {
-  const isAuthenticated = !!localStorage.getItem('username');
+const AuthWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isAuthenticated = !!localStorage.getItem('userName');
 
+  useEffect(() => {
+    if (!isAuthenticated && location.pathname !== '/login') {
+      navigate('/login');
+    } else if (isAuthenticated && location.pathname === '/login') {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
+
+  return <>{children}</>;
+};
+
+const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} 
-        />
-        <Route 
-          path="/dashboard" 
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
-        />
-      </Routes>
+      <AuthWrapper>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+        </Routes>
+      </AuthWrapper>
     </BrowserRouter>
   );
 };
