@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 
@@ -6,6 +6,8 @@ interface User {
   name: string;
   email: string;
   password: string;
+  createdAt: number;
+  lastLogin: number;
 }
 
 const Login: React.FC = () => {
@@ -13,28 +15,54 @@ const Login: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Verificar credenciais salvas ao carregar
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleAuthentication = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Recuperar lista de usuários
+    const storedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    
     if (isLogin) {
       // Lógica de Login
-      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
       const user = storedUsers.find((u: User) => u.email === email && u.password === password);
       
       if (user) {
+        // Gerenciar "Lembrar de mim"
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+
         // Armazenar nome para boas-vindas
         localStorage.setItem('userName', user.name);
+        
+        // Atualizar último login
+        user.lastLogin = Date.now();
+        
+        // Atualizar lista de usuários
+        const updatedUsers = storedUsers.map((u: User) => 
+          u.email === email ? user : u
+        );
+        localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+        
         navigate('/dashboard');
       } else {
         alert('Credenciais inválidas');
       }
     } else {
       // Lógica de Registro
-      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // Verificar se já existe usuário com este email
       const existingUser = storedUsers.find((u: User) => u.email === email);
       
       if (existingUser) {
@@ -42,12 +70,26 @@ const Login: React.FC = () => {
         return;
       }
       
-      const newUser: User = { name, email, password };
+      const newUser: User = { 
+        name, 
+        email, 
+        password, 
+        createdAt: Date.now(),
+        lastLogin: Date.now()
+      };
+      
       storedUsers.push(newUser);
       
-      localStorage.setItem('users', JSON.stringify(storedUsers));
+      // Salvar lista atualizada de usuários
+      localStorage.setItem('registeredUsers', JSON.stringify(storedUsers));
+      
       // Armazenar nome para boas-vindas
       localStorage.setItem('userName', name);
+      
+      // Gerenciar "Lembrar de mim"
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      }
       
       navigate('/dashboard');
     }
@@ -97,6 +139,19 @@ const Login: React.FC = () => {
               placeholder="Senha"
               className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={() => setRememberMe(!rememberMe)}
+              className="mr-2"
+            />
+            <label htmlFor="rememberMe" className="text-sm">
+              Lembrar meu email
+            </label>
           </div>
           
           <button
